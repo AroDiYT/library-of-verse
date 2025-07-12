@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chapter Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #222; color: white; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #4ade80; color: black; }
+        .error { background: #ef4444; }
+        .info { background: #3b82f6; }
+        pre { background: #111; padding: 10px; overflow-x: auto; }
+        button { padding: 10px 20px; margin: 5px; background: #3b82f6; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #2563eb; }
+    </style>
+</head>
+<body>
+    <h1>Chapter Test Page</h1>
+    <div id="status">Ready to test...</div>
+    
+    <button onclick="login()">1. Login</button>
+    <button onclick="checkAuth()">2. Check Auth</button>
+    <button onclick="loadChapter(1)">3. Load Chapter 1</button>
+    <button onclick="loadChapter(2)">4. Load Chapter 2</button>
+    <button onclick="loadChapter(3)">5. Load Chapter 3</button>
+    <button onclick="checkAuthAgain()">6. Check Auth Again</button>
+    
+    <div id="output"></div>
+
+    <script>
+        let sessionData = null;
+        
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + type;
+        }
+        
+        function addOutput(title, data) {
+            const outputDiv = document.getElementById('output');
+            const pre = document.createElement('pre');
+            pre.innerHTML = `<strong>${title}:</strong>\n${JSON.stringify(data, null, 2)}`;
+            outputDiv.appendChild(pre);
+        }
+        
+        async function login() {
+            try {
+                updateStatus('Logging in...', 'info');
+                
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'admin@forgedpacts.com',
+                        password: 'admin123'
+                    }),
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                addOutput('Login Response', { status: response.status, data });
+                
+                if (data.success) {
+                    updateStatus('Login successful!', 'success');
+                    sessionData = data;
+                } else {
+                    updateStatus('Login failed!', 'error');
+                }
+                
+            } catch (error) {
+                updateStatus('Login error: ' + error.message, 'error');
+                addOutput('Login Error', error);
+            }
+        }
+        
+        async function checkAuth() {
+            try {
+                updateStatus('Checking authentication...', 'info');
+                
+                const response = await fetch('/api/auth/me', {
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                addOutput('Auth Check Response', { status: response.status, data });
+                
+                if (data.success) {
+                    updateStatus('Authentication valid!', 'success');
+                } else {
+                    updateStatus('Authentication failed!', 'error');
+                }
+                
+            } catch (error) {
+                updateStatus('Auth check error: ' + error.message, 'error');
+                addOutput('Auth Check Error', error);
+            }
+        }
+        
+        async function loadChapter(id) {
+            try {
+                updateStatus(`Loading chapter ${id}...`, 'info');
+                
+                const response = await fetch(`/api/chapters/${id}`, {
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                addOutput(`Chapter ${id} Response`, { 
+                    status: response.status, 
+                    title: data.chapter?.title,
+                    contentLength: data.chapter?.content?.length,
+                    error: data.error
+                });
+                
+                if (response.status === 200) {
+                    updateStatus(`Chapter ${id} loaded successfully!`, 'success');
+                } else {
+                    updateStatus(`Chapter ${id} failed to load!`, 'error');
+                }
+                
+            } catch (error) {
+                updateStatus('Chapter load error: ' + error.message, 'error');
+                addOutput(`Chapter ${id} Error`, error);
+            }
+        }
+        
+        async function checkAuthAgain() {
+            await checkAuth();
+        }
+    </script>
+</body>
+</html>

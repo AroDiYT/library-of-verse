@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Login</title>
+</head>
+<body>
+    <h1>Testing Login</h1>
+    <button onclick="testLogin()">Test Admin Login</button>
+    <div id="result"></div>
+
+    <script>
+        async function testLogin() {
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@forgedpacts.com',
+                        password: 'admin123'
+                    }),
+                });
+
+                const data = await response.json();
+                document.getElementById('result').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                if (data.success) {
+                    // Now test the /api/auth/me endpoint
+                    const meResponse = await fetch('/api/auth/me');
+                    const meData = await meResponse.json();
+                    document.getElementById('result').innerHTML += `<h3>Auth check:</h3><pre>${JSON.stringify(meData, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
